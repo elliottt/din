@@ -52,10 +52,11 @@ generic123Backend cmd = do
         return ()
 
   return Backend
-    { backendLoad    = \ path -> send ["LOAD",path]
-    , backendPause   =           send ["PAUSE"]
-    , backendPlay    =           send ["PAUSE"]
-    , backendStop    =           send ["STOP"]
-    , backendCleanup = cleanup
-    , backendStatus  = readSampleVar status
+    { backendLoad      = \ path -> send ["LOAD",path]
+    , backendPause     =           send ["PAUSE"]
+    , backendPlay      =           send ["PAUSE"]
+    , backendStop      =           send ["STOP"]
+    , backendCleanup   = cleanup
+    , backendStatus    = readSampleVar status
+    , backendSetVolume = \ vol -> send ["GAIN",show vol]
     }

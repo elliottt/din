@@ -7,7 +7,9 @@ module Player (
 
   , load
   , play
-  , 
+  , pause
+  , stop
+  , setVolume
   ) where
 
 import Backend
@@ -77,6 +79,7 @@ backendFor ext p = case lookupBackend ext p of
 
 data PlayerException
   = NoBackendFor Extension
+  | InvalidVolume Int
     deriving (Show,Typeable)
 
 instance Exception PlayerException
@@ -102,3 +105,8 @@ stop p = withCurrent p backendStop
 
 pause :: Control
 pause p = withCurrent p backendPause
+
+setVolume :: Int -> Control
+setVolume vol p
+  | 0 <= vol && vol <= 100 = withCurrent p (flip backendSetVolume vol)
+  | otherwise              = throwIO (InvalidVolume vol)
