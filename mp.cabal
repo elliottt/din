@@ -11,6 +11,7 @@ Cabal-version:       >=1.2
 
 Executable mp
   Main-is:             Main.hs
+  Hs-source-dirs:      src
   Other-modules:       Backend,
                        Backend.Generic123,
                        Filesystem,
