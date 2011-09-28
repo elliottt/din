@@ -1,4 +1,7 @@
-module Backend.Generic123 where
+module Backend.Generic123 (
+    mpg321Backend
+  , ogg123Backend
+  ) where
 
 import Backend
 
@@ -9,15 +12,15 @@ import System.Process
 
 -- | A backend for controlling mpg321.
 mpg321Backend :: IO Backend
-mpg321Backend  = generic123Backend (ShellCommand "mpg321 -R asdf")
+mpg321Backend  = generic123Backend "mpg321" (ShellCommand "mpg321 -R mp")
 
 -- | A backend for controlling ogg123.
 ogg123Backend :: IO Backend
-ogg123Backend  = generic123Backend (ShellCommand "ogg123 -R asdf")
+ogg123Backend  = generic123Backend "ogg123" (ShellCommand "ogg123 -R mp")
 
 -- | A generic backend for audio programs that support an mpg123-like interface.
-generic123Backend :: CmdSpec -> IO Backend
-generic123Backend cmd = do
+generic123Backend :: String -> CmdSpec -> IO Backend
+generic123Backend name cmd = do
   let process = CreateProcess
         { cmdspec   = cmd
         , cwd       = Nothing
@@ -52,7 +55,8 @@ generic123Backend cmd = do
         return ()
 
   return Backend
-    { backendLoad      = \ path -> send ["LOAD",path]
+    { backendName      = name
+    , backendLoad      = \ path -> send ["LOAD",path]
     , backendPause     =           send ["PAUSE"]
     , backendPlay      =           send ["PAUSE"]
     , backendStop      =           send ["STOP"]

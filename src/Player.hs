@@ -1,33 +1,28 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 
-module Player (
-    Player()
-  , initPlayer
-  , registerBackend
-
-  , load
-  , play
-  , pause
-  , stop
-  , setVolume
-  ) where
+module Player where
 
 import Backend
 import Backend.Generic123
 import Filesystem
 
-import Control.Concurrent (MVar,newEmptyMVar,tryTakeMVar,withMVar,putMVar)
+import Control.Concurrent
+    (MVar,newMVar,newEmptyMVar,tryTakeMVar,withMVar,putMVar,modifyMVar)
 import Control.Exception (throwIO,Exception)
-import Control.Monad (void)
+import Control.Monad (void,(<=<))
+import Data.List (nub)
+import Data.Maybe (catMaybes)
 import Data.Typeable (Typeable)
 import qualified Data.Map as Map
+import qualified Data.Traversable as T
 
 
-type BackendMap = Map.Map Extension Backend
+-- Player Handle ---------------------------------------------------------------
 
 data Player = Player
-  { playerBackends :: BackendMap
-  , playerCurrent  :: MVar Backend
+  { playerExtensions :: ExtensionMap
+  , playerBackends   :: BackendMap
+  , playerCurrent    :: MVar Backend
   }
 
 clearCurrent :: Player -> IO ()
@@ -51,28 +46,97 @@ withCurrent p k = do
     Nothing -> return ()
 
 
+-- Extension Management --------------------------------------------------------
+
+type ExtensionMap = Map.Map Extension BackendName
+
+mapExtension :: Extension -> BackendName -> Player -> Player
+mapExtension ext bn p =
+  p { playerExtensions = Map.insert ext bn (playerExtensions p) }
+
+mapExtensions :: [(Extension,BackendName)] -> Player -> Player
+mapExtensions es p =
+  p { playerExtensions = Map.fromList es `Map.union` playerExtensions p }
+
+
+-- Backend Management ----------------------------------------------------------
+
+data BackendState
+  = Running Backend
+  | NotRunning (IO Backend)
+
+notRunning :: IO Backend -> IO (MVar BackendState)
+notRunning  = newMVar . NotRunning
+
+activate :: BackendState -> IO (BackendState,Backend)
+activate s@(Running b)   = return (s,b)
+activate (NotRunning mk) = do
+  b <- mk
+  return (Running b,b)
+
+type BackendMap = Map.Map BackendName (MVar BackendState)
+
+addBackend :: BackendName -> IO Backend -> BackendMap -> IO BackendMap
+addBackend n mk m = do
+  var <- notRunning mk
+  return (Map.insert n var m)
+
+lookupBackend :: BackendName -> BackendMap -> IO Backend
+lookupBackend n m = case Map.lookup n m of
+  Just var -> modifyMVar var activate
+  Nothing  -> throwIO (InvalidBackend n)
+
+
 -- Player Interface ------------------------------------------------------------
 
 initPlayer :: IO Player
 initPlayer  = do
-  current <- newEmptyMVar
+  current  <- newEmptyMVar
+  backends <- newMVar Map.empty
   return Player
-    { playerBackends = Map.empty
-    , playerCurrent  = current
+    { playerExtensions = Map.empty
+    , playerBackends   = Map.empty
+    , playerCurrent    = current
     }
 
-registerBackend :: Extension -> Backend -> Player -> Player
-registerBackend ext b p = p
-  { playerBackends = Map.insert (normalizeExtension ext) b (playerBackends p)
-  }
+-- | Register a @Backend@ with a mnemonic name.
+registerBackend :: BackendName -> IO Backend -> Player -> IO Player
+registerBackend n b p = do
+  bs' <- addBackend n b (playerBackends p)
+  return p { playerBackends = bs' }
 
-lookupBackend :: Extension -> Player -> Maybe Backend
-lookupBackend ext = Map.lookup (normalizeExtension ext) . playerBackends
+-- | Lookup the name of the @Backend@ associated with this @Extension@.
+lookupExtension :: Extension -> Player -> Maybe BackendName
+lookupExtension ext = Map.lookup (normalizeExtension ext) . playerExtensions
 
-backendFor :: Extension -> Player -> IO Backend
-backendFor ext p = case lookupBackend ext p of
-  Just b  -> return b
-  Nothing -> throwIO (NoBackendFor ext)
+-- | All currently registered @Backend@s.
+registeredBackends :: Player -> [BackendName]
+registeredBackends  = Map.keys . playerBackends
+
+-- | All currently running @Backend@s.
+runningBackends :: Player -> IO [Backend]
+runningBackends  = fmap catMaybes . mapM step . Map.elems . playerBackends
+  where
+  step var = withMVar var $ \ s -> case s of
+    Running b    -> return (Just b)
+    NotRunning _ -> return Nothing
+
+-- | Lookup the @Backend@ that will play this @Extension@.
+backendFor :: Extension -> Player -> IO (Maybe Backend)
+backendFor ext p = T.sequenceA $ do
+  bname <- lookupExtension (normalizeExtension ext) p
+  return (lookupBackend bname (playerBackends p))
+
+requireBackendFor :: Extension -> Player -> IO Backend
+requireBackendFor ext p = do
+  mb <- backendFor ext p
+  case mb of
+    Just b  -> return b
+    Nothing -> throwIO (NoBackendFor ext)
+
+-- | Cleanup all @Backend@s associated with the player.
+cleanupPlayer :: Player -> IO ()
+cleanupPlayer  = mapM_ backendCleanup <=< runningBackends
 
 
 -- Player Exceptions -----------------------------------------------------------
@@ -80,33 +144,25 @@ backendFor ext p = case lookupBackend ext p of
 data PlayerException
   = NoBackendFor Extension
   | InvalidVolume Int
+  | InvalidBackend BackendName
     deriving (Show,Typeable)
 
 instance Exception PlayerException
 
 
--- Playback Control ------------------------------------------------------------
+-- Playback --------------------------------------------------------------------
 
 type Control = Player -> IO ()
 
 load :: FilePath -> Control
-load file p = do
-  let ext = takeExtension file
-  b <- backendFor ext p
+load path p = do
+  b <- requireBackendFor (takeExtension path) p
   setCurrent b p
-  backendLoad b file
+  backendLoad b path
   pause p
-
-play :: Control
-play p = withCurrent p backendPlay
-
-stop :: Control
-stop p = withCurrent p backendStop
 
 pause :: Control
 pause p = withCurrent p backendPause
 
-setVolume :: Int -> Control
-setVolume vol p
-  | 0 <= vol && vol <= 100 = withCurrent p (flip backendSetVolume vol)
-  | otherwise              = throwIO (InvalidVolume vol)
+play :: Control
+play p = withCurrent p backendPlay
