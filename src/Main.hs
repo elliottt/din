@@ -1,20 +1,12 @@
 module Main where
 
+import UI
+
 import Graphics.Vty
-import Graphics.Vty.Widgets.All
+import Graphics.Vty.Widgets.All (runUi)
 
 
 main :: IO ()
 main  = do
-
-  (b,fg) <- newDirBrowser defaultBrowserSkin
-
-  c <- newCollection
-  _ <- addToCollection c (dirBrowserWidget b) fg
-
-  b `onBrowseAccept` error
-  b `onBrowseCancel` error
-
-  runUi c defaultContext
-    { focusAttr = white `on` blue
-    }
+  c <- interface
+  runUi c context
