@@ -1,4 +1,4 @@
-Name:                mp
+Name:                din
 Version:             0.1
 License:             BSD3
 License-file:        LICENSE
@@ -9,7 +9,7 @@ Build-type:          Simple
 Cabal-version:       >=1.2
 
 
-Executable mp
+Executable din
   Main-is:             Main.hs
   Hs-source-dirs:      src
   Other-modules:       Backend,
