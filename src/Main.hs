@@ -1,23 +1,20 @@
 module Main where
 
-import Backend.Generic123
-import Player
+import Graphics.Vty
+import Graphics.Vty.Widgets.All
 
-import Control.Concurrent (threadDelay)
-import Control.Exception (bracket)
-
-
-createPlayer :: IO Player
-createPlayer  = exts `fmap` create
-  where
-  create = registerBackend "mp3" mpg321Backend
-       =<< registerBackend "ogg" ogg123Backend
-       =<< initPlayer
-
-  exts   = mapExtensions [(".mp3", "mp3"), (".ogg", "ogg")]
 
 main :: IO ()
-main  = bracket createPlayer cleanupPlayer $ \ p -> do
-  load "/home/trevor/.local/share/Trash/files/07 - Don't Walk Away.ogg" p
-  play p
-  threadDelay (5 * 1000 * 1000)
+main  = do
+
+  (b,fg) <- newDirBrowser defaultBrowserSkin
+
+  c <- newCollection
+  _ <- addToCollection c (dirBrowserWidget b) fg
+
+  b `onBrowseAccept` error
+  b `onBrowseCancel` error
+
+  runUi c defaultContext
+    { focusAttr = white `on` blue
+    }
