@@ -30,19 +30,13 @@ playerInterface c = do
 
   statusBox <- newStatusBox
 
-  artists <- newStringList mempty ["a", "b", "c"]
+  artists <- newStringList mempty ["All artists", "坂本龍", "дни след световната", "c"]
   addToFocusGroup fg artists
-
-  genres <- newStringList mempty ["awesome", "lame"]
-  addToFocusGroup fg genres
 
   songs <- newStringList mempty ["x", "y", "z"]
   addToFocusGroup fg songs
 
-  agBox <- return artists <++> vBorder <++> return genres
-  agBox % 50
-
-  mainBox <- return agBox <--> hBorder <--> return songs
+  mainBox <- return artists <--> hBorder <--> return songs
   mainBox % 25
 
   interface <- return statusBox <--> return mainBox
