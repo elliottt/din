@@ -3,6 +3,9 @@ module Filesystem (
     Extension
   , normalizeExtension
 
+    -- * File Paths
+  , isVisible
+
     -- * Re-exported
   , takeExtension
   ) where
@@ -15,3 +18,8 @@ type Extension = String
 
 normalizeExtension :: Extension -> Extension
 normalizeExtension  = map toLower
+
+isVisible :: FilePath -> Bool
+isVisible ""      = False
+isVisible ('.':_) = False
+isVisible _       = True
