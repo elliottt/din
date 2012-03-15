@@ -29,17 +29,16 @@ instance E.Exception SongException
 
 getSongInfo :: FilePath -> IO SongInfo
 getSongInfo path = do
-  mb <- openFileRef path
+  mb <- withFileRef path $ \ f ->
+        SongInfo
+    <$> getArtist  f
+    <*> getTitle   f
+    <*> getAlbum   f
+    <*> getComment f
+    <*> getGenre   f
+    <*> getYear    f
+    <*> getTrack   f
   case mb of
-    Just f  -> mkSongInfo f
-    Nothing -> E.throwIO (FileNotFound path)
+    Just info -> return info
+    Nothing   -> E.throwIO (FileNotFound path)
 
-mkSongInfo :: FileRef -> IO SongInfo
-mkSongInfo f = SongInfo
-           <$> getArtist  f
-           <*> getTitle   f
-           <*> getAlbum   f
-           <*> getComment f
-           <*> getGenre   f
-           <*> getYear    f
-           <*> getTrack   f
