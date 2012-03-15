@@ -38,3 +38,7 @@ addDirectory recurse path0 lib = loop path0
 
 -- | A filter on the library, producing songs.
 type Filter = Library -> IO [Song]
+
+
+byArtist :: Artist -> Filter
+byArtist a lib = return []

@@ -18,11 +18,13 @@ context  = defaultContext
 
 newStatusBox = do
   text   <- plainText "status"
-  bar    <- newProgressBar white blue
+  bar    <- newProgressBar blue cyan
   box    <- hBox text (progressBarWidget bar)
   setBoxChildSizePolicy box (PerChild BoxAuto (BoxFixed 40))
 
-  vCentered box <--> hBorder
+  setProgress bar 50
+
+  vCentered box
 
 playerInterface :: Collection -> IO Choose
 playerInterface c = do
@@ -30,17 +32,16 @@ playerInterface c = do
 
   statusBox <- newStatusBox
 
-  artists <- newStringList mempty ["All artists", "坂本龍", "дни след световната", "c"]
-  addToFocusGroup fg artists
-
   songs <- newStringList mempty ["x", "y", "z"]
   addToFocusGroup fg songs
 
-  mainBox <- return artists <--> hBorder <--> return songs
-  mainBox % 25
-
-  interface <- return statusBox <--> return mainBox
+  interface <- return statusBox <--> return songs
   setBoxChildSizePolicy interface (PerChild (BoxFixed 2) BoxAuto)
+
+  songs `onKeyPressed` \ _ k _ -> case k of
+    KASCII 'k' -> scrollUp songs   >> return True
+    KASCII 'j' -> scrollDown songs >> return True
+    _          -> return False
 
   fg `onKeyPressed` \ _ k _ -> case k of
     KASCII 'q' -> shutdownUi  >> return True

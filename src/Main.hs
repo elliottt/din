@@ -1,6 +1,7 @@
 module Main where
 
 import UI
+import Tag
 
 import Graphics.Vty.Widgets.All (runUi,newCollection)
 
