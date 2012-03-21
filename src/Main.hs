@@ -1,6 +1,6 @@
 module Main where
 
-import UI
+import UI (playerInterface,context)
 import Tag
 
 import Graphics.Vty.Widgets.All (runUi,newCollection)
