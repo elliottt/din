@@ -29,7 +29,7 @@ instance E.Exception SongException
 
 getSongInfo :: FilePath -> IO SongInfo
 getSongInfo path = do
-  mb <- withFileRef path $ \ f ->
+  mb <- withTags path $ \ f ->
         SongInfo
     <$> getArtist  f
     <*> getTitle   f

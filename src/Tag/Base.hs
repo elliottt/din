@@ -2,10 +2,10 @@
 {-# LANGUAGE EmptyDataDecls #-}
 
 module Tag.Base (
-    FileRef
-  , withFileRef
-  , getArtist
+    withTags
+  , Tag()
   , getTitle
+  , getArtist
   , getAlbum
   , getComment
   , getGenre
@@ -13,111 +13,115 @@ module Tag.Base (
   , getTrack
   ) where
 
-import Control.Applicative ((<$>),(<$))
-import Data.Char (toUpper)
+import Control.Monad ((<=<))
 import Data.Word (Word8)
-import Foreign.Ptr (Ptr,castPtr)
-import Foreign.C.String (CString,withCString,peekCString)
-import Foreign.C.Types (CChar(..),CInt(..))
+import Foreign.C.String (CString,withCString)
+import Foreign.C.Types (CInt(..))
 import Foreign.Marshal.Array (lengthArray0,copyArray)
+import Foreign.Ptr (Ptr,nullPtr)
 import qualified Control.Exception as E
 import qualified Data.ByteString.Internal as SI
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 
 
--- File Inerface ---------------------------------------------------------------
+-- TagLib Files ----------------------------------------------------------------
 
-type FileRef = Ptr FileRef_
+data TagLib_File
 
-data FileRef_
+foreign import ccall "taglib_file_new"
+  c_taglib_file_new :: CString -> IO (Ptr TagLib_File)
 
-withFileRef :: FilePath -> (FileRef -> IO a) -> IO (Maybe a)
-withFileRef path body =
-  withCString path                       $ \ c_path ->
-  E.bracket (c_open c_path) c_freeFileRef_ $ \ ptr    -> do
-    valid <- c_isValid ptr
-    if fromIntegral valid == (0 :: Int)
-      then return Nothing
-      else Just <$> body ptr
+foreign import ccall "taglib_file_free"
+  c_taglib_file_free :: Ptr TagLib_File -> IO ()
 
-foreign import ccall safe "c_open"
-  c_open :: CString -> IO FileRef
+foreign import ccall "taglib_file_is_valid"
+  c_taglib_file_is_valid :: Ptr TagLib_File -> IO CInt
 
-foreign import ccall safe "c_freeFileRef"
-  c_freeFileRef_ :: FileRef -> IO ()
+foreign import ccall "taglib_file_tag"
+  c_taglib_file_tag :: Ptr TagLib_File -> IO (Ptr Tag)
 
-foreign import ccall safe "c_isValid"
-  c_isValid :: FileRef -> IO CChar
+foreign import ccall "taglib_tag_free_strings"
+  c_taglib_free_strings :: IO ()
 
 
--- Tag Interface ---------------------------------------------------------------
+-- | Process the Tag pointer for a file.
+withTags :: FilePath -> (Ptr Tag -> IO a) -> IO (Maybe a)
+withTags path k =
+  withCString path                             $ \ c_path ->
+  E.bracket (c_taglib_file_new c_path) cleanup $ \ c_file ->
+    if nullPtr == c_file
+       then return Nothing
+       else do
+         res <- c_taglib_file_is_valid c_file
+         if 0 == res
+            then return Nothing
+            else fmap Just (k =<< c_taglib_file_tag c_file)
 
-unpackString_ :: IO (Ptr String_) -> IO T.Text
-unpackString_ create =
-  E.bracket create c_freeString $ \ str -> do
-    src <- c_toCString str
-    len <- lengthArray0 0 src
-    T.decodeUtf8 `fmap` SI.create len (\ dst -> copyArray dst src len)
-
-type GetString = FileRef -> IO (Ptr String_)
-
--- | Gets the content of the artist field.
-getArtist :: FileRef -> IO T.Text
-getArtist  = unpackString_ . c_artist
-
-foreign import ccall safe "c_artist"
-  c_artist :: GetString
-
--- | Gets the content of the title field.
-getTitle :: FileRef -> IO T.Text
-getTitle  = unpackString_ . c_title
-
-foreign import ccall safe "c_title"
-  c_title :: GetString
-
--- | Get the content of the album field.
-getAlbum :: FileRef -> IO T.Text
-getAlbum  = unpackString_ . c_album
-
-foreign import ccall safe "c_album"
-  c_album :: GetString
-
--- | Get the content of the comment field.
-getComment :: FileRef -> IO T.Text
-getComment  = unpackString_ . c_comment
-
-foreign import ccall safe "c_comment"
-  c_comment :: GetString
-
--- | Get the content of the genre field.
-getGenre :: FileRef -> IO T.Text
-getGenre  = unpackString_ . c_genre
-
-foreign import ccall safe "c_genre"
-  c_genre :: GetString
-
-type GetInt = Ptr FileRef_ -> IO CInt
-
-getYear :: FileRef -> IO Int
-getYear  = fmap fromIntegral . c_year
-
-foreign import ccall safe "c_year"
-  c_year :: GetInt
-
-getTrack :: FileRef -> IO Int
-getTrack  = fmap fromIntegral . c_track
-
-foreign import ccall safe "c_track"
-  c_track :: GetInt
+  where
+  cleanup c_file = do
+    c_taglib_free_strings
+    c_taglib_file_free c_file
 
 
--- String Management -----------------------------------------------------------
+-- Tags ------------------------------------------------------------------------
 
-data String_
+-- | Abstract Tag object.
+data Tag
 
-foreign import ccall safe "c_toCString"
-  c_toCString :: Ptr String_ -> IO (Ptr Word8)
 
-foreign import ccall safe "c_freeString"
-  c_freeString :: Ptr String_ -> IO ()
+type GetString = Ptr Tag -> IO (Ptr Word8)
+
+unpackString :: GetString -> Ptr Tag -> IO T.Text
+unpackString k c_tag = do
+  c_str <- k c_tag
+  len   <- lengthArray0 0 c_str
+  T.decodeUtf8 `fmap` SI.create len (\ dst -> copyArray dst c_str len)
+
+getTitle :: Ptr Tag -> IO T.Text
+getTitle  = unpackString c_taglib_tag_title
+
+foreign import ccall "taglib_tag_title"
+  c_taglib_tag_title :: GetString
+
+getArtist :: Ptr Tag -> IO T.Text
+getArtist  = unpackString c_taglib_tag_artist
+
+foreign import ccall "taglib_tag_artist"
+  c_taglib_tag_artist :: GetString
+
+getAlbum :: Ptr Tag -> IO T.Text
+getAlbum  = unpackString c_taglib_tag_album
+
+foreign import ccall "taglib_tag_album"
+  c_taglib_tag_album :: GetString
+
+getComment :: Ptr Tag -> IO T.Text
+getComment  = unpackString c_taglib_tag_comment
+
+foreign import ccall "taglib_tag_comment"
+  c_taglib_tag_comment :: GetString
+
+getGenre :: Ptr Tag -> IO T.Text
+getGenre  = unpackString c_taglib_tag_genre
+
+foreign import ccall "taglib_tag_genre"
+  c_taglib_tag_genre :: GetString
+
+
+type GetInt = Ptr Tag -> IO CInt
+
+unpackInt :: GetInt -> Ptr Tag -> IO Int
+unpackInt k c_tag = fromIntegral `fmap` k c_tag
+
+getYear :: Ptr Tag -> IO Int
+getYear  = unpackInt c_taglib_tag_year
+
+foreign import ccall "taglib_tag_year"
+  c_taglib_tag_year :: GetInt
+
+getTrack :: Ptr Tag -> IO Int
+getTrack  = unpackInt c_taglib_tag_track
+
+foreign import ccall "taglib_tag_track"
+  c_taglib_tag_track :: GetInt
