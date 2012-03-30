@@ -5,6 +5,7 @@
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Storage where
 
@@ -13,6 +14,18 @@ import Database.Persist.Sqlite
 import Database.Persist.TH
 
 
+data InfoType
+  = InfoArtist
+  | InfoTitle
+  | InfoAlbum
+  | InfoComment
+  | InfoGenre
+  | InfoYear
+  | InfoTrack
+    deriving (Show,Read,Eq,Ord)
+
+derivePersistField "InfoType"
+
 share
   [ mkPersist sqlSettings
   , mkMigrate "migrateAll"
@@ -20,10 +33,13 @@ share
   [persistUpperCase|
 
 Song
-        url String
-        SongURL url
+        url             String
+        SongURL         url
 
 Info
-        songId 
+        songId          SongId Eq
+        infoType        InfoType
+        infoString      String
+        infoNum         Int
 
 |]
