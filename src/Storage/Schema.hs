@@ -7,7 +7,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Storage where
+module Storage.Schema where
 
 import Database.Persist
 import Database.Persist.Sqlite

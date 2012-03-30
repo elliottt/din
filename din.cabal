@@ -16,7 +16,7 @@ Executable din
                        Backend.Generic123,
                        Filesystem,
                        Player,
-                       Storage,
+                       Storage.Schema,
                        Tag,
                        UI,
                        UI.PlaybackStatus
