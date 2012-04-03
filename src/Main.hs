@@ -1,7 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
-import Storage (migrateAll)
+import Storage.Query
+import Storage.Schema (migrateAll)
 import UI (playerInterface,context)
 import Tag
 

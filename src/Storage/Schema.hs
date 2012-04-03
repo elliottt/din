@@ -38,8 +38,8 @@ Song
 
 Info
         songId          SongId Eq
-        infoType        InfoType
-        infoString      String
-        infoNum         Int
+        label           InfoType
+        string          String
+        number          Int
 
 |]
