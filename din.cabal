@@ -14,9 +14,12 @@ Executable din
   Hs-source-dirs:      src
   Other-modules:       Backend,
                        Backend.Generic123,
+                       Din,
                        Filesystem,
                        Player,
+                       Storage,
                        Tag,
+                       Tag.Base,
                        UI,
                        UI.PlaybackStatus
   Build-depends:       base                 >= 4         && < 5,
@@ -24,6 +27,7 @@ Executable din
                        containers           >= 0.4       && < 0.5,
                        filepath             >= 1.2       && < 1.4,
                        process              >= 1.1       && < 1.2,
+                       monadLib             >= 3.6.1     && < 3.7,
                        sqlite               >= 0.5.2     && < 0.6,
                        text                 >= 0.11.1    && < 0.12,
                        vty                  >= 4.7       && < 4.8,

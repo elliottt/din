@@ -1,6 +1,5 @@
 module UI where
 
-import Config
 import UI.PlaybackStatus
 
 import Graphics.Vty
