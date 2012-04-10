@@ -16,8 +16,6 @@ Executable din
                        Backend.Generic123,
                        Filesystem,
                        Player,
-                       Storage.Query,
-                       Storage.Schema,
                        Tag,
                        UI,
                        UI.PlaybackStatus
@@ -26,11 +24,7 @@ Executable din
                        containers           >= 0.4       && < 0.5,
                        filepath             >= 1.2       && < 1.4,
                        process              >= 1.1       && < 1.2,
-                       template-haskell     >= 2.5       && < 2.8,
-                       mtl                  >= 2.0.1.0   && < 2.1,
-                       persistent           >= 0.8.0.2   && < 0.9,
-                       persistent-sqlite    >= 0.8.0     && < 0.9,
-                       persistent-template  >= 0.8.2     && < 0.9,
+                       sqlite               >= 0.5.2     && < 0.6,
                        text                 >= 0.11.1    && < 0.12,
                        vty                  >= 4.7       && < 4.8,
                        vty-ui               >= 1.4       && < 1.5
