@@ -8,6 +8,7 @@ import Database.SQLite (SQLiteHandle)
 data Env = Env
   { envDbHandle :: SQLiteHandle
   , envLogLevel :: LogLevel
+  , envDbFresh  :: Bool
   }
 
 

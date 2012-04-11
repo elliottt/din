@@ -3,7 +3,7 @@ module Main where
 
 import Din (Din,runDin,io,logInfo)
 import Options (parseOptions,withOptionsEnv)
-import Storage (withStorage)
+import Storage (withStorage,initDb)
 import Tag
 import UI (playerInterface,context)
 
@@ -22,6 +22,9 @@ main  = do
 dinMain :: Din ()
 dinMain  = do
   logInfo ("Starting din-" ++ showVersion version)
+
+  initDb
+
   -- run the ui
   io $ do
     c       <- newCollection

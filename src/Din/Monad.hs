@@ -10,6 +10,7 @@ module Din.Monad (
     -- * Primitive Operations
   , io
   , dbHandle
+  , freshDb
 
     -- * Message Logging
   , LogLevel(..)
@@ -48,6 +49,10 @@ dbHandle  = envDbHandle `fmap` Din ask
 -- | Return the current @LogLevel@.
 logLevel :: Din LogLevel
 logLevel  = envLogLevel `fmap` Din ask
+
+-- | Check to see if the database is newly created.
+freshDb :: Din Bool
+freshDb  = envDbFresh `fmap` Din ask
 
 
 -- Logging ---------------------------------------------------------------------

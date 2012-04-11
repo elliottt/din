@@ -1,6 +1,9 @@
 module Storage.Schema (
+    -- * Schema
+    dinSchema
+
     -- * Table Definitions
-    songTable
+  , songTable
   , infoTable
   ) where
 
@@ -10,6 +13,15 @@ import Database.SQL.Types
 
 
 -- Schema ----------------------------------------------------------------------
+
+dinSchema :: [SQLTable]
+dinSchema  =
+  [ songTable
+  , infoTable
+  ]
+
+
+-- Tables-----------------------------------------------------------------------
 
 type SQLColumn = Column SQLType
 
