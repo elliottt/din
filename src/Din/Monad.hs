@@ -19,24 +19,13 @@ module Din.Monad (
   , logError
   ) where
 
+import Din.Types (LogLevel(..),Env(..))
+import Options (withOptionsEnv)
+
 import Control.Applicative (Applicative)
 import Control.Monad (when)
 import Database.SQLite (SQLiteHandle)
 import MonadLib (ReaderT,ReaderM(..),BaseM(..),runM)
-
-
--- Din Environment -------------------------------------------------------------
-
-data Env = Env
-  { envDbHandle :: SQLiteHandle
-  , envLogLevel :: LogLevel
-  }
-
-emptyEnv :: SQLiteHandle -> Env
-emptyEnv h = Env
-  { envDbHandle = h
-  , envLogLevel = LogInfo
-  }
 
 
 -- Din Monad -------------------------------------------------------------------
@@ -45,8 +34,8 @@ newtype Din a = Din
   { unDin :: ReaderT Env IO a
   } deriving (Functor,Applicative,Monad)
 
-runDin :: Din a -> SQLiteHandle-> IO a
-runDin (Din m) h = runM m (emptyEnv h)
+runDin :: Din a -> Env -> IO a
+runDin (Din m) = runM m
 
 -- | Lift an @IO@ action into the @Din@ monad.
 io :: IO a -> Din a
@@ -62,9 +51,6 @@ logLevel  = envLogLevel `fmap` Din ask
 
 
 -- Logging ---------------------------------------------------------------------
-
-data LogLevel = LogError | LogWarn | LogInfo | LogDebug
-    deriving (Show,Eq,Ord,Enum,Bounded)
 
 logLevelTag :: LogLevel -> Char
 logLevelTag lev = case lev of
