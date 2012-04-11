@@ -49,7 +49,7 @@ options  =
   , Option "d" ["database"] (ReqArg setDbLocation "PATH")
     "Location of the song database"
 
-  , Option "l" ["log-level"] (ReqArg parseLogLevel "INT")
+  , Option "v" ["log-level"] (ReqArg parseLogLevel "INT")
     "Log level for console output"
   ]
 
