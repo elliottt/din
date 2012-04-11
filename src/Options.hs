@@ -92,5 +92,5 @@ parseOptions args = do
 displayUsage :: [String] -> IO ()
 displayUsage errs = do
   prog <- getProgName
-  let banner = unlines (errs ++ ["usage: " ++ prog ++ " [OPTIONS]\n"])
+  let banner = unlines (errs ++ ["usage: " ++ prog ++ " [OPTIONS]"])
   putStrLn (usageInfo banner options)
