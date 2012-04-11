@@ -1,68 +1,27 @@
 module Storage (
-    -- * Storage
-    withStorage
-
-    -- * Table Definitions
-  , songTable
+    module Storage
+  , module Exports
   ) where
 
-import Database.SQL.Types
-    (SQLTable,SQLType(..),Table(..),Column(..),IntType(..),Clause(..)
-    ,SQLType(..))
-import Database.SQLite (openConnection,closeConnection,SQLiteHandle,defineTable)
-import qualified Control.Exception as E
+import Din
+import Storage.Db as Exports
+import Storage.Schema (songTable,infoTable)
+
+import Database.SQL (SQLTable,tabName)
+import Database.SQLite (defineTable)
 
 
--- Connection ------------------------------------------------------------------
+-- Initialization --------------------------------------------------------------
 
--- | Run a computation in the context of a connection to the database.
-withStorage :: FilePath -> (SQLiteHandle -> IO a) -> IO a
-withStorage path = E.bracket (openConnection path) closeConnection
+initDb :: Din ()
+initDb  = do
+  createTable songTable
+  createTable infoTable
 
-
--- Schema ----------------------------------------------------------------------
-
-type SQLColumn = Column SQLType
-
-idCol :: SQLColumn
-idCol  = Column
-  { colName    = "id"
-  , colType    = SQLInt NORMAL True False
-  , colClauses = [PrimaryKey True, Unique, IsNullable False]
-  }
-
-intCol :: String -> SQLColumn
-intCol name = Column
-  { colName    = name
-  , colType    = SQLInt NORMAL False False
-  , colClauses = [IsNullable True]
-  }
-
-varCharCol :: String -> Int -> SQLColumn
-varCharCol name len = Column
-  { colName    = name
-  , colType    = SQLVarChar len
-  , colClauses = [IsNullable True]
-  }
-
-songTable :: SQLTable
-songTable  = Table
-  { tabName        = "songs"
-  , tabColumns     =
-    [ idCol
-    , (varCharCol "uri" 2048) { colClauses = [IsNullable False] }
-    ]
-  , tabConstraints = []
-  }
-
-infoTable :: SQLTable
-infoTable  = Table
-  { tabName        = "info"
-  , tabColumns     =
-    [ idCol
-    , (intCol "type") { colClauses = [IsNullable False] }
-    , varCharCol "string" 1024
-    , intCol "number"
-    ]
-  , tabConstraints = []
-  }
+createTable :: SQLTable -> Din ()
+createTable def = do
+  h  <- dbHandle
+  mb <- io (defineTable h def)
+  case mb of
+    Just _  -> return ()
+    Nothing -> logError ("Failed when creating table: " ++ tabName def)
