@@ -21,7 +21,6 @@ module Din.Monad (
   ) where
 
 import Din.Types (LogLevel(..),Env(..))
-import Options (withOptionsEnv)
 
 import Control.Applicative (Applicative)
 import Control.Monad (when)

@@ -14,6 +14,7 @@ Executable din
   Hs-source-dirs:      src
   Other-modules:       Backend,
                        Backend.Generic123,
+                       Config,
                        Din,
                        Din.Monad,
                        Filesystem,
@@ -31,6 +32,7 @@ Executable din
                        filepath             >= 1.2       && < 1.4,
                        directory            >= 1.1       && < 1.2,
                        process              >= 1.1       && < 1.2,
+                       attoparsec           >= 0.10.1    && < 0.11,
                        monadLib             >= 3.6.1     && < 3.7,
                        sqlite               >= 0.5.2     && < 0.6,
                        text                 >= 0.11.1    && < 0.12,
