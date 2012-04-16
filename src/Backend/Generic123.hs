@@ -12,23 +12,20 @@ import System.Process
 
 -- | A backend for controlling mpg321.
 mpg321Backend :: IO Backend
-mpg321Backend  = generic123Backend "mpg321" (ShellCommand "mpg321 -R mp")
+mpg321Backend  = generic123Backend "mpg321" "mpg321 -R mp"
 
 -- | A backend for controlling ogg123.
 ogg123Backend :: IO Backend
-ogg123Backend  = generic123Backend "ogg123" (ShellCommand "ogg123 -R mp")
+ogg123Backend  = generic123Backend "ogg123" "ogg123 -R mp"
 
 -- | A generic backend for audio programs that support an mpg123-like interface.
-generic123Backend :: String -> CmdSpec -> IO Backend
+generic123Backend :: String -> String -> IO Backend
 generic123Backend name cmd = do
-  let process = CreateProcess
-        { cmdspec   = cmd
-        , cwd       = Nothing
-        , env       = Nothing
-        , std_in    = CreatePipe
-        , std_out   = CreatePipe
-        , std_err   = CreatePipe
-        , close_fds = True
+  let process = (shell cmd)
+        { std_in       = CreatePipe
+        , std_out      = CreatePipe
+        , std_err      = CreatePipe
+        , close_fds    = True
         }
   (Just inH, Just outH, Just errH, ph) <- createProcess process
 
