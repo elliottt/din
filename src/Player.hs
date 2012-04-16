@@ -4,7 +4,7 @@ module Player where
 
 import Backend
 import Backend.Generic123
-import Filesystem
+import Filesystem.Utils (Extension,normalizeExtension,takeExtension)
 
 import Control.Concurrent
     (MVar,newMVar,newEmptyMVar,tryTakeMVar,withMVar,putMVar,modifyMVar)
