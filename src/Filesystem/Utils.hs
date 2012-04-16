@@ -1,4 +1,4 @@
-module Filesystem (
+module Filesystem.Utils (
     -- * File Extensions
     Extension
   , normalizeExtension
