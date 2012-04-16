@@ -11,6 +11,8 @@ module Din.Monad (
   , io
   , dbHandle
   , freshDb
+  , player
+  , embed
 
     -- * Message Logging
   , LogLevel(..)
@@ -26,6 +28,7 @@ import Control.Applicative (Applicative)
 import Control.Monad (when)
 import Database.SQLite (SQLiteHandle)
 import MonadLib (ReaderT,ReaderM(..),BaseM(..),runM)
+import Player (Player)
 
 
 -- Din Monad -------------------------------------------------------------------
@@ -53,6 +56,13 @@ logLevel  = envLogLevel `fmap` Din ask
 freshDb :: Din Bool
 freshDb  = envDbFresh `fmap` Din ask
 
+player :: Din Player
+player  = envPlayer `fmap` Din ask
+
+embed :: Din a -> Din (IO a)
+embed m = Din $ do
+  env <- ask
+  return (runDin m env)
 
 -- Logging ---------------------------------------------------------------------
 

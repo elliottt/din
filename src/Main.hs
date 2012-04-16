@@ -1,10 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
+import Backend.Generic123 (mpg321Backend,ogg123Backend)
 import Config (parseConfig,Config(..),emptyConfig)
 import Din (Din,runDin,io,logInfo)
 import Din.Types (Env(..))
 import Options (parseOptions,Options(..))
+import Player (Player,initPlayer,registerBackend,mapExtension)
 import Storage (withStorage,initDb)
 import Tag
 import UI (playerInterface,context)
@@ -39,13 +41,25 @@ loadConfig opts = do
         Right cfg -> return cfg
         Left err  -> fail err
 
+setupPlayer :: IO Player
+setupPlayer  = do
+  p <- initPlayer
+
+  registerBackend "mpg321" mpg321Backend p
+  registerBackend "ogg123" ogg123Backend p
+
+  return $ mapExtension ".mp3" "mpg321"
+         $ mapExtension ".ogg" "ogg123" p
+
 withEnv :: Options -> Config -> (Env -> IO a) -> IO a
 withEnv opts cfg k = do
   isFresh <- doesFileExist (cfgDbPath cfg)
+  p       <- setupPlayer
   withStorage (cfgDbPath cfg) $ \ h -> k Env
     { envDbHandle = h
     , envLogLevel = optLogLevel opts
     , envDbFresh  = isFresh
+    , envPlayer   = p
     }
 
 dinMain :: Din ()
