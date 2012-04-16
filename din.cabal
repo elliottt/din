@@ -39,7 +39,7 @@ Executable din
                        sqlite               >= 0.5.2     && < 0.6,
                        text                 >= 0.11.1    && < 0.12,
                        vty                  >= 4.7       && < 4.8,
-                       vty-ui               >= 1.4       && < 1.5
+                       vty-ui               >= 1.4       && < 1.6
   Extra-libraries:     tag_c
   Pkgconfig-depends:   taglib_c
   Ghc-options:         -threaded
