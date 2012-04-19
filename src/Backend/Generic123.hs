@@ -9,6 +9,7 @@ import Control.Concurrent
 import Control.Monad
 import System.IO
 import System.Process
+    (shell,CreateProcess(..),StdStream(..),createProcess,waitForProcess)
 
 -- | A backend for controlling mpg321.
 mpg321Backend :: IO Backend

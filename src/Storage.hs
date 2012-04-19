@@ -18,6 +18,7 @@ import Database.SQLite (defineTable)
 initDb :: Din ()
 initDb  = do
   isFresh <- freshDb
+  logDebug ("Fresh database: " ++ show isFresh)
   when isFresh (mapM_ createTable dinSchema)
 
 -- | Given a specification, create a table in the database.

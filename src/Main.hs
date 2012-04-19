@@ -51,9 +51,14 @@ setupPlayer  = do
   return $ mapExtension ".mp3" "mpg321"
          $ mapExtension ".ogg" "ogg123" p
 
+checkForDb :: FilePath -> IO Bool
+checkForDb path = case path of
+  ":memory:" -> return True
+  _          -> doesFileExist path
+
 withEnv :: Options -> Config -> (Env -> IO a) -> IO a
 withEnv opts cfg k = do
-  isFresh <- doesFileExist (cfgDbPath cfg)
+  isFresh <- checkForDb (cfgDbPath cfg)
   p       <- setupPlayer
   withStorage (cfgDbPath cfg) $ \ h -> k Env
     { envDbHandle = h
