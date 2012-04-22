@@ -13,6 +13,7 @@ module Din.Monad (
   , freshDb
   , player
   , embed
+  , forkDin
 
     -- * Message Logging
   , LogLevel(..)
@@ -25,6 +26,7 @@ module Din.Monad (
 import Din.Types (LogLevel(..),Env(..))
 
 import Control.Applicative (Applicative)
+import Control.Concurrent (forkIO,ThreadId)
 import Control.Monad (when)
 import Database.SQLite (SQLiteHandle)
 import MonadLib (ReaderT,ReaderM(..),BaseM(..),runM)
@@ -63,6 +65,9 @@ embed :: Din a -> Din (IO a)
 embed m = Din $ do
   env <- ask
   return (runDin m env)
+
+forkDin :: Din () -> Din ThreadId
+forkDin m = io . forkIO =<< embed m
 
 -- Logging ---------------------------------------------------------------------
 

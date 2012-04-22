@@ -3,13 +3,14 @@ module Main where
 
 import Backend.Generic123 (mpg321Backend,ogg123Backend)
 import Config (parseConfig,Config(..),emptyConfig)
-import Din (Din,runDin,io,logInfo)
+import Din (Din,runDin,io,logInfo,forkDin)
 import Din.Types (Env(..))
 import Options (parseOptions,Options(..))
 import Player (Player,initPlayer,registerBackend,mapExtension)
 import Storage (withStorage,initDb)
 import Tag
 import UI (playerInterface,context)
+import Watch (watcher)
 
 import Data.Version (showVersion)
 import Graphics.Vty.Widgets.All (runUi,newCollection)
@@ -27,7 +28,7 @@ main  = do
   let dbPath = takeDirectory (optConfigFile opts)
   createDirectoryIfMissing True dbPath
   cfg       <- loadConfig opts
-  withEnv opts cfg (runDin dinMain)
+  withEnv opts cfg (runDin (dinMain cfg))
 
 loadConfig :: Options -> IO Config
 loadConfig opts = do
@@ -67,11 +68,13 @@ withEnv opts cfg k = do
     , envPlayer   = p
     }
 
-dinMain :: Din ()
-dinMain  = do
+dinMain :: Config -> Din ()
+dinMain cfg = do
   logInfo ("Starting din-" ++ showVersion version)
 
   initDb
+
+  _ <- forkDin (watcher (cfgWatchPaths cfg))
 
   -- run the ui
   io $ do
